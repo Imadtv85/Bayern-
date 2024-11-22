@@ -1,0 +1,56 @@
+name: VIP Facebook Live Stream
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Check M3U8 URL and Stream Key
+      run: |
+        if [ -z "https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8" ]; then echo "M3U8 URL is missing!" && exit 1; fi
+        if [ -z "FB-122166127556260989-0-AbzRc4aBgl6X_q2g" ]; then echo "Facebook Stream Key is missing!" && exit 1; fi
+
+  stream:
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Install FFmpeg
+      run: |
+        sudo apt update
+        sudo apt install -y ffmpeg
+
+    - name: Start Streaming to Facebook Live
+      run: |
+        echo "Starting Facebook Live stream..."
+        ffmpeg -i "https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8" \
+               -c:v libx264 \
+               -preset veryfast \
+               -b:v 3000k \
+               -maxrate 3000k \
+               -bufsize 6000k \
+               -c:a aac \
+               -b:a 192k \
+               -ar 44100 \
+               -f flv \
+               "rtmp://live-api-s.facebook.com:80/rtmp/FB-122166127556260989-0-AbzRc4aBgl6X_q2g"
+
+  clean_up:
+    needs: stream
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clean Up Resources
+      run: |
+        echo "Cleaning up and releasing resources..."
+        # Optionally, you can include any resource cleanup commands here if needed
