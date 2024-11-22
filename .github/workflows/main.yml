@@ -36,7 +36,7 @@ jobs:
 
         # Variables
         M3U8_URL="https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8"
-        FB_STREAM_KEY="FB-122166135272260989-0-AbwTtkpEbN5l9t7h"  # Directly added the stream key here
+        FB_STREAM_KEY="FB-122166135272260989-0-AbwTtkpEbN5l9t7h"  # Directly adding the stream key here
         STREAM_URL="rtmps://live-api-s.facebook.com:443/rtmp/${FB_STREAM_KEY}"
 
         # Retry logic (with 5 retries, 10 seconds apart)
