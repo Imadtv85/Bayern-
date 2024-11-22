@@ -6,25 +6,7 @@ on:
       - main
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
-
-    - name: Validate Stream Key
-      run: |
-        # تعيين القيمة إذا كانت مفقودة
-        if [ -z "${FB_STREAM_KEY}" ]; then
-          echo "Facebook Stream Key is missing!"
-          exit 1
-        else
-          echo "Facebook Stream Key is set"
-        fi
-
   stream:
-    needs: validate
     runs-on: ubuntu-latest
 
     steps:
