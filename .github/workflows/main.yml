@@ -31,9 +31,9 @@ jobs:
         sudo apt update
         sudo apt install -y ffmpeg
 
-    - name: Start Streaming to Facebook Live
+    - name: Start Streaming to Facebook Live (RTMPS)
       run: |
-        echo "Starting Facebook Live stream..."
+        echo "Starting Facebook Live stream via RTMPS..."
         ffmpeg -i "https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8" \
                -c:v libx264 \
                -preset veryfast \
@@ -44,7 +44,7 @@ jobs:
                -b:a 192k \
                -ar 44100 \
                -f flv \
-               "rtmp://live-api-s.facebook.com:80/rtmp/FB-122166127556260989-0-AbzRc4aBgl6X_q2g"
+               "rtmps://live-api-s.facebook.com:443/rtmp/FB-122166127556260989-0-AbzRc4aBgl6X_q2g"
 
   clean_up:
     needs: stream
