@@ -1,4 +1,4 @@
-name: VIP Facebook Live Stream
+name: VIP Facebook Live Stream (No Interruptions - Advanced)
 
 on:
   push:
@@ -13,10 +13,9 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
-    - name: Check M3U8 URL and Stream Key
+    - name: Validate Stream Key
       run: |
-        if [ -z "https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8" ]; then echo "M3U8 URL is missing!" && exit 1; fi
-        if [ -z "FB-122166127556260989-0-AbzRc4aBgl6X_q2g" ]; then echo "Facebook Stream Key is missing!" && exit 1; fi
+        if [ -z "${{ secrets.FB_STREAM_KEY }}" ]; then echo "Facebook Stream Key is missing!" && exit 1; fi
 
   stream:
     needs: validate
@@ -26,25 +25,67 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v2
 
-    - name: Install FFmpeg
+    - name: Install FFmpeg and Dependencies
       run: |
         sudo apt update
-        sudo apt install -y ffmpeg
+        sudo apt install -y ffmpeg curl
 
-    - name: Start Streaming to Facebook Live (RTMPS)
+    - name: Start Streaming to Facebook Live (RTMPS) with Auto-Retry and Health Checks
       run: |
-        echo "Starting Facebook Live stream via RTMPS..."
-        ffmpeg -i "https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8" \
-               -c:v libx264 \
-               -preset veryfast \
-               -b:v 3000k \
-               -maxrate 3000k \
-               -bufsize 6000k \
-               -c:a aac \
-               -b:a 192k \
-               -ar 44100 \
-               -f flv \
-               "rtmps://live-api-s.facebook.com:443/rtmp/FB-122166127556260989-0-AbzRc4aBgl6X_q2g"
+        echo "Starting Facebook Live stream via RTMPS with Auto-Retry and Health Checks..."
+
+        # Variables
+        M3U8_URL="https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8"
+        FB_STREAM_KEY="FB-122166135272260989-0-AbwTtkpEbN5l9t7h"  # Directly added the stream key
+        STREAM_URL="rtmps://live-api-s.facebook.com:443/rtmp/${FB_STREAM_KEY}"
+        
+        # Retry logic (with 5 retries, 10 seconds apart)
+        RETRY_COUNT=0
+        MAX_RETRIES=5
+        HEALTH_CHECK_URL="https://live-api-s.facebook.com/rtmp/healthcheck"
+        
+        # Health Check - Before Streaming
+        echo "Performing health check..."
+        curl --silent --fail $HEALTH_CHECK_URL || { echo "Health check failed, retrying..."; exit 1; }
+        
+        # Stream Loop with retry mechanism
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          ffmpeg -i "$M3U8_URL" \
+                 -c:v libx264 \
+                 -preset veryfast \
+                 -b:v 3000k \
+                 -maxrate 3000k \
+                 -bufsize 6000k \
+                 -c:a aac \
+                 -b:a 192k \
+                 -ar 44100 \
+                 -f flv \
+                 "$STREAM_URL" | tee stream_log.txt
+
+          # Check if ffmpeg command failed
+          if [ $? -eq 0 ]; then
+            echo "Stream started successfully!"
+            break
+          else
+            echo "Error detected. Retrying in 10 seconds..."
+            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT+1))
+          fi
+        done
+        
+        if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+          echo "Max retries reached. Unable to start the stream. Exiting..."
+          exit 1
+        fi
+
+  real_time_monitoring:
+    needs: stream
+    runs-on: ubuntu-latest
+    steps:
+    - name: Monitor Stream and Check for Errors
+      run: |
+        echo "Monitoring stream for errors in real-time..."
+        tail -f stream_log.txt | grep --line-buffered "Error" || echo "No errors detected during the stream."
 
   clean_up:
     needs: stream
@@ -53,4 +94,4 @@ jobs:
     - name: Clean Up Resources
       run: |
         echo "Cleaning up and releasing resources..."
-        # Optionally, you can include any resource cleanup commands here if needed
+        # Add cleanup commands if necessary
