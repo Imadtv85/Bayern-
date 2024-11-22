@@ -18,9 +18,9 @@ jobs:
         sudo apt update
         sudo apt install -y ffmpeg curl
 
-    - name: Start Streaming to Facebook Live (RTMPS) with Auto-Retry and Health Checks
+    - name: Start Streaming to Facebook Live (RTMPS) with Auto-Retry
       run: |
-        echo "Starting Facebook Live stream via RTMPS with Auto-Retry and Health Checks..."
+        echo "Starting Facebook Live stream via RTMPS with Auto-Retry..."
 
         # Variables
         M3U8_URL="https://live4.beinconnect.us/YallaGoalApp/beINSports5.m3u8"
@@ -32,11 +32,6 @@ jobs:
         # Retry logic (with 5 retries, 10 seconds apart)
         RETRY_COUNT=0
         MAX_RETRIES=5
-        HEALTH_CHECK_URL="https://live-api-s.facebook.com/rtmp/healthcheck"
-        
-        # Health Check - Before Streaming
-        echo "Performing health check..."
-        curl --silent --fail $HEALTH_CHECK_URL || { echo "Health check failed, retrying..."; exit 1; }
         
         # Stream Loop with retry mechanism
         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
