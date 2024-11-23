@@ -18,6 +18,12 @@ jobs:
       with:
         python-version: '3.x'
 
+    - name: Install FFmpeg
+      run: |
+        sudo apt update
+        sudo apt install -y ffmpeg
+        ffmpeg -version  # التأكد من أن ffmpeg تم تثبيته بنجاح
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
