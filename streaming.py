@@ -1,7 +1,7 @@
 import requests
-import os
+from bs4 import BeautifulSoup
 
-# تعريف cookies الخاصة بك
+# إضافة الـ cookies مباشرة
 cookies = {
     'datr': 'dSdBZ8ZGxPbQR8tNY23cgN_J',
     'sb': 'dSdBZ3uKi5P7y8smUuJjarYd',
@@ -14,22 +14,26 @@ cookies = {
     'locale': 'fr_FR',
     'wl_cbv': 'v2%3Bclient_version%3A2679%3Btimestamp%3A1732323238',
     'fbl_st': '100727379%3BT%3A28872054',
-    'vpd': 'v1%3B809x431x2.5062501430511475',
+    'vpd': 'v1%3B809x431x2.5062501430511475'
 }
 
-# إرسال طلب GET للحصول على صفحة البث من Facebook
-url = "https://www.facebook.com/live/producer/"
+# عنوان URL لصفحة البث المباشر على فيسبوك
+url = 'https://www.facebook.com/live/producer'
+
+# إرسال طلب إلى Facebook باستخدام الـ cookies
 response = requests.get(url, cookies=cookies)
 
-# هنا تحتاج لاستخراج الـ stream key من الـ response
-# يمكنك استخدام BeautifulSoup أو طرق أخرى لاستخراج الـ stream key من HTML
-# سأفترض أن الـ stream key سيتم استخراجه بنجاح في المتغير stream_key
-# تأكد من أنه تم استخراج الـ stream key بشكل صحيح
-
-stream_key = "your_extracted_stream_key"  # يجب استخراج المفتاح بشكل صحيح هنا
-
-# الآن سنستخدم FFmpeg للبث عبر RTMPS إلى Facebook باستخدام stream key
-ffmpeg_command = f"ffmpeg -i https://live4.beinconnect.us/YallaGoalApp/beINSports1.m3u8 -c:v libx264 -preset fast -maxrate 3000k -bufsize 6000k -c:a aac -b:a 192k -f flv rtmps://live-api-s.facebook.com:443/rtmp/{stream_key}"
-
-# تشغيل الأمر
-os.system(ffmpeg_command)
+# تحقق من استجابة الصفحة
+if response.status_code == 200:
+    # استخدم BeautifulSoup لاستخراج الـ stream key
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # افترض أننا نبحث عن الـ stream key في أحد المدخلات
+    stream_key_element = soup.find('input', {'name': 'stream_key'})
+    if stream_key_element:
+        stream_key = stream_key_element['value']
+        print(f"Stream Key: {stream_key}")
+    else:
+        print("لم يتم العثور على stream key.")
+else:
+    print(f"فشل في الوصول إلى الصفحة. الحالة: {response.status_code}")
