@@ -1,0 +1,32 @@
+name: Facebook Live Streaming
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"  # تشغيل البث كل 6 ساعات
+  workflow_dispatch:
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install ffmpeg -y
+        pip install requests
+
+    - name: Run streaming script
+      run: |
+        python streaming.py
+
+    - name: Finish Streaming
+      run: echo "Streaming Finished"
